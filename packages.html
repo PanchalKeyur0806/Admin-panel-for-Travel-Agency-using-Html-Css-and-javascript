@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --text-color: #ecf0f1;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        .user-info {
+            margin-left: 13px !important;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 20px;
+            position: fixed;
+            height: 100%;
+            transition: all 0.3s ease;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .brand {
+            font-size: 24px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .nav-items {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background-color: var(--accent-color);
+        }
+
+        .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+            width: calc(100% - 250px);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+
+        .menu-toggle {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .create-button {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: auto;
+        }
+
+        .create-button:hover {
+            background-color: #2980b9;
+        }
+
+        .container {
+            max-width: 100%;
+        }
+
+        .search-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .package-list {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .edit-button,
+        .delete-button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .edit-button {
+            background-color: #27ae60;
+        }
+
+        .edit-button:hover {
+            background-color: #219150;
+        }
+
+        .delete-button {
+            background-color: #e74c3c;
+        }
+
+        .delete-button:hover {
+            background-color: #c0392b;
+        }
+
+
+        /* form */
+
+        .create-form {
+            display: none;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 1000px;
+            max-width: 95%;
+            margin: 20px auto;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .create-form {
+                width: 95%;
+                max-height: 80vh;
+                /* Limit height to 80% of viewport height */
+                overflow-y: auto;
+                /* Enable vertical scrolling */
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                position: fixed;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                /* Single column layout */
+                gap: 15px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                /* Stack buttons vertically */
+                align-items: stretch;
+                /* Make buttons full width */
+            }
+
+            .form-actions button {
+                margin-bottom: 10px;
+                /* Add space between stacked buttons */
+                width: 100%;
+                /* Full width buttons */
+            }
+        }
+
+
+
+
+        /* Additional improvements for very small screens */
+        @media (max-width: 480px) {
+            .create-form {
+                margin-left: 10px;
+                width: 100%;
+                height: 100%;
+                max-height: 100%;
+                top: 0;
+                left: 0;
+                transform: none;
+                border-radius: 0;
+                overflow-y: auto;
+                padding-bottom: 50px;
+                /* Adds bottom space */
+            }
+
+            .form-grid {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="overlay"></div>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            Travel Admin
+        </div>
+        <ul class="nav-items">
+            <li class="nav-item">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="users.html" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    Manage Users
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="packages.html" class="nav-link">
+                    <i class="fas fa-box"></i>
+                    Packages
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="./payments.html" class="nav-link">
+                    <i class="fas fa-credit-card"></i>
+                    Payments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="./feedback.html" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    Feedback
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="header">
+            <div class="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="user-info">
+                <i class="fas fa-user"></i>
+                Admin
+            </div>
+            <button class="create-button">Create Package</button>
+        </div>
+
+        <div class="container">
+            <div class="search-section">
+                <input type="text" class="search-bar" placeholder="Search packages...">
+            </div>
+            <div class="package-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Package ID</th>
+                            <th>Package Name</th>
+                            <th>Duration</th>
+                            <th>Price</th>
+                            <th>Average Rating</th>
+                            <th>Total Ratings</th>
+                            <th>Created Date</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Review</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>001</td>
+                            <td>Luxury Beach Package</td>
+                            <td>7 Days</td>
+                            <td>$2,500</td>
+                            <td>4.8</td>
+                            <td>120</td>
+                            <td>2025-01-01</td>
+                            <td>2025-06-01</td>
+                            <td>2025-06-07</td>
+                            <td>Amazing experience!</td>
+                            <td>Active</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="edit-button">Edit</button>
+                                    <button class="delete-button">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>002</td>
+                            <td>Mountain Adventure</td>
+                            <td>5 Days</td>
+                            <td>$1,800</td>
+                            <td>4.5</td>
+                            <td>95</td>
+                            <td>2025-01-10</td>
+                            <td>2025-07-01</td>
+                            <td>2025-07-05</td>
+                            <td>Challenging but rewarding!</td>
+                            <td>Active</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="edit-button">Edit</button>
+                                    <button class="delete-button">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <form class="create-form" method="post" action="./packages.html" enctype="multipart/form-data">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Package Name</label>
+                <input type="text" name="package_name" required>
+            </div>
+            <div class="form-group">
+                <label>Package Description</label>
+                <textarea name="package_description" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Package Image</label>
+                <input type="file" name="package_image" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label>Duration</label>
+                <input type="text" name="duration" placeholder="e.g., 7 Days">
+            </div>
+            <div class="form-group">
+                <label>Price</label>
+                <input type="number" name="price" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Discount (%)</label>
+                <input type="number" name="discount" min="0" max="100">
+            </div>
+            <div class="form-group">
+                <label>Package Start Date</label>
+                <input type="date" name="start_date">
+            </div>
+            <div class="form-group">
+                <label>Package End Date</label>
+                <input type="date" name="end_date">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Package</button>
+            </div>
+        </div>
+    </form>
+
+
+
+
+
+
+
+    <script>
+        const menuToggle = document.querySelector('.menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.overlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+
+        // from
+
+        // document.querySelector('.create-button').addEventListener('click', function () {
+        //     document.querySelector('.create-form').style.display = 'block';
+        // });
+
+        // document.querySelector('.form-actions .btn-secondary').addEventListener('click', function () {
+        //     document.querySelector('.create-form').style.display = 'none';
+        // });
+
+
+        //  updated
+
+        document.querySelector('.create-button').addEventListener('click', function () {
+            const createForm = document.querySelector('.create-form');
+            const overlay = document.querySelector('.overlay');
+            createForm.style.display = 'block';
+            overlay.classList.add('active');
+        });
+
+        document.querySelector('.form-actions .btn-secondary').addEventListener('click', function () {
+            const createForm = document.querySelector('.create-form');
+            const overlay = document.querySelector('.overlay');
+            createForm.style.display = 'none';
+            overlay.classList.remove('active');
+        });
+
+        document.querySelector('.overlay').addEventListener('click', function (e) {
+            if (e.target === this) {
+                const createForm = document.querySelector('.create-form');
+                createForm.style.display = 'none';
+                this.classList.remove('active');
+            }
+        });
+
+
+
+        //  edit button event
+        document.querySelectorAll('.edit-button').forEach(button => {
+            button.addEventListener('click', function () {
+                const row = this.closest('tr');
+                const createForm = document.querySelector('.create-form');
+                const overlay = document.querySelector('.overlay');
+
+                // Pre-fill form fields
+                createForm.querySelector('input[name="package_name"]').value = row.cells[1].textContent;
+                createForm.querySelector('textarea[name="package_description"]').value = row.cells[9].textContent;
+                createForm.querySelector('input[name="duration"]').value = row.cells[2].textContent;
+                createForm.querySelector('input[name="price"]').value = row.cells[3].textContent.replace('$', '').replace(',', '');
+
+                // Format dates for date inputs
+                createForm.querySelector('input[name="start_date"]').value = row.cells[7].textContent;
+                createForm.querySelector('input[name="end_date"]').value = row.cells[8].textContent;
+
+                // Set status
+                createForm.querySelector('select[name="status"]').value = row.cells[10].textContent.toLowerCase();
+
+                // Change form submission text
+                const submitButton = createForm.querySelector('button[type="submit"]');
+                submitButton.textContent = 'Update Package';
+
+                // Show form
+                createForm.style.display = 'block';
+                overlay.classList.add('active');
+            });
+        });
+
+        // Existing create and close form logic remains the same
+        document.querySelector('.create-button').addEventListener('click', function () {
+            const createForm = document.querySelector('.create-form');
+            const overlay = document.querySelector('.overlay');
+
+            // Reset form
+            createForm.reset();
+            const submitButton = createForm.querySelector('button[type="submit"]');
+            submitButton.textContent = 'Create Package';
+
+            createForm.style.display = 'block';
+            overlay.classList.add('active');
+        });
+
+        document.querySelector('.form-actions .btn-secondary').addEventListener('click', function () {
+            const createForm = document.querySelector('.create-form');
+            const overlay = document.querySelector('.overlay');
+            createForm.style.display = 'none';
+            overlay.classList.remove('active');
+        });
+
+        document.querySelector('.overlay').addEventListener('click', function (e) {
+            if (e.target === this) {
+                const createForm = document.querySelector('.create-form');
+                createForm.style.display = 'none';
+                this.classList.remove('active');
+            }
+        });
+    </script>
+
+
+
+
+
+</body>
+
+</html>
